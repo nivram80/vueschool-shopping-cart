@@ -8,13 +8,20 @@
     <ul v-else>
       <li v-for="product in products">
         {{product.title}} - {{product.price | currency}}
-        <button @click="addProductToCart(product)">Add to cart</button>
+        <button
+          :disabled="!productIsInStock(product)"
+          @click="addProductToCart(product)"
+        >
+          Add to cart
+        </button>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+  import { mapState, mapGetters, mapActions } from 'vuex'
+
   export default {
     name: 'ProductList',
     data () {
@@ -23,19 +30,23 @@
       }
     },
     computed: {
-      products () {
-        return this.$store.getters.availableProducts
-      }
+      ...mapState({
+        products: state => state.products.items
+      }),
+      ...mapGetters({
+        productIsInStock: 'productIsInStock'
+      })
     },
     created () {
       this.loading = true
-      this.$store.dispatch('fetchProducts')
+      this.fetchProducts()
         .then(() => this.loading = false)
     },
     methods: {
-      addProductToCart (product) {
-        this.$store.dispatch('addProductToCart', product)
-      }
+      ...mapActions({
+        fetchProducts: 'fetchProducts',
+        addProductToCart: 'addProductToCart'
+      })
     }
   }
 </script>
