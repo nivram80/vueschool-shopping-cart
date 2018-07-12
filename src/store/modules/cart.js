@@ -1,4 +1,7 @@
+import shop from '@/api/shop'
+
 export default {
+  namespaced: true,
   state: {
     items: [],
     checkoutStatus: null
@@ -19,8 +22,8 @@ export default {
     }
   },
   actions: {
-    addProductToCart({state, getters, commit, rootState}, product) {
-      if (getters.productIsInStock(product)) {
+    addProductToCart({state, getters, commit, rootState, rootGetters}, product) {
+      if (rootGetters['products/productIsInStock'](product)) {
         const cartItem = state.items.find(item => item.id === product.id)
 
         if (!cartItem) {
@@ -29,9 +32,21 @@ export default {
           commit('incrementItemQuantity', cartItem)
         }
 
-        commit('decrementProductInventory', product)
+        commit('products/decrementProductInventory', product, {root: true})
       }
     },
+    checkout({state, commit}) {
+      shop.buyProducts(
+        state.items,
+        () => {
+          commit('emptyCart')
+          commit('setCheckoutStatus', 'success')
+        },
+        () => {
+          commit('setCheckoutStatus', 'fail')
+        }
+      )
+    }
   },
   mutations: {
     pushProductToCart (state, productId) {
